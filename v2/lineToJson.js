@@ -17,13 +17,14 @@ function default_1(csvRows, conv) {
     return res;
 }
 exports.default = default_1;
-;
 function processRow(row, conv, index) {
-    if (conv.parseParam.checkColumn && conv.parseRuntime.headers && row.length !== conv.parseRuntime.headers.length) {
-        throw (CSVError_1.default.column_mismatched(conv.parseRuntime.parsedLineNumber + index));
+    if (conv.parseParam.checkColumn &&
+        conv.parseRuntime.headers &&
+        row.length !== conv.parseRuntime.headers.length) {
+        throw CSVError_1.default.column_mismatched(conv.parseRuntime.parsedLineNumber + index);
     }
     var headRow = conv.parseRuntime.headers || [];
-    var resultRow = convertRowToJson(row, headRow, conv);
+    var resultRow = convertRowToJson(row, headRow, conv, index);
     if (resultRow) {
         return resultRow;
     }
@@ -31,12 +32,12 @@ function processRow(row, conv, index) {
         return null;
     }
 }
-function convertRowToJson(row, headRow, conv) {
+function convertRowToJson(row, headRow, conv, rowIndex) {
     var hasValue = false;
     var resultRow = {};
     for (var i = 0, len = row.length; i < len; i++) {
         var item = row[i];
-        if (conv.parseParam.ignoreEmpty && item === '') {
+        if (conv.parseParam.ignoreEmpty && item === "") {
             continue;
         }
         hasValue = true;
@@ -46,7 +47,7 @@ function convertRowToJson(row, headRow, conv) {
         }
         var convFunc = getConvFunc(head, i, conv);
         if (convFunc) {
-            var convRes = convFunc(item, head, resultRow, row, i);
+            var convRes = convFunc(item, head, resultRow, row, i, rowIndex);
             if (convRes !== undefined) {
                 setPath(resultRow, head, convRes, conv, i);
             }
@@ -73,9 +74,9 @@ function convertRowToJson(row, headRow, conv) {
     }
 }
 var builtInConv = {
-    "string": stringType,
-    "number": numberType,
-    "omit": function () { }
+    string: stringType,
+    number: numberType,
+    omit: function () { },
 };
 function getConvFunc(head, i, conv) {
     if (conv.parseRuntime.columnConv[i] !== undefined) {
@@ -84,7 +85,7 @@ function getConvFunc(head, i, conv) {
     else {
         var flag = conv.parseParam.colParser[head];
         if (flag === undefined) {
-            return conv.parseRuntime.columnConv[i] = null;
+            return (conv.parseRuntime.columnConv[i] = null);
         }
         if (typeof flag === "object") {
             flag = flag.cellParser || "string";
@@ -93,17 +94,17 @@ function getConvFunc(head, i, conv) {
             flag = flag.trim().toLowerCase();
             var builtInFunc = builtInConv[flag];
             if (builtInFunc) {
-                return conv.parseRuntime.columnConv[i] = builtInFunc;
+                return (conv.parseRuntime.columnConv[i] = builtInFunc);
             }
             else {
-                return conv.parseRuntime.columnConv[i] = null;
+                return (conv.parseRuntime.columnConv[i] = null);
             }
         }
         else if (typeof flag === "function") {
-            return conv.parseRuntime.columnConv[i] = flag;
+            return (conv.parseRuntime.columnConv[i] = flag);
         }
         else {
-            return conv.parseRuntime.columnConv[i] = null;
+            return (conv.parseRuntime.columnConv[i] = null);
         }
     }
 }
@@ -123,7 +124,9 @@ function setPath(resultJson, head, value, conv, headIdx) {
                         break;
                     }
                 }
-                if (!jsonHead || conv.parseParam.colParser[head] && conv.parseParam.colParser[head].flat) {
+                if (!jsonHead ||
+                    (conv.parseParam.colParser[head] &&
+                        conv.parseParam.colParser[head].flat)) {
                     conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
                 }
                 else {
@@ -151,17 +154,17 @@ function checkType(item, head, headIdx, conv) {
     if (conv.parseRuntime.headerType[headIdx]) {
         return conv.parseRuntime.headerType[headIdx];
     }
-    else if (head.indexOf('number#!') > -1) {
-        return conv.parseRuntime.headerType[headIdx] = numberType;
+    else if (head.indexOf("number#!") > -1) {
+        return (conv.parseRuntime.headerType[headIdx] = numberType);
     }
-    else if (head.indexOf('string#!') > -1) {
-        return conv.parseRuntime.headerType[headIdx] = stringType;
+    else if (head.indexOf("string#!") > -1) {
+        return (conv.parseRuntime.headerType[headIdx] = stringType);
     }
     else if (conv.parseParam.checkType) {
-        return conv.parseRuntime.headerType[headIdx] = dynamicType;
+        return (conv.parseRuntime.headerType[headIdx] = dynamicType);
     }
     else {
-        return conv.parseRuntime.headerType[headIdx] = stringType;
+        return (conv.parseRuntime.headerType[headIdx] = stringType);
     }
 }
 function numberType(item) {
@@ -182,10 +185,12 @@ function dynamicType(item) {
     if (numReg.test(trimed)) {
         return numberType(item);
     }
-    else if (trimed.length === 5 && trimed.toLowerCase() === "false" || trimed.length === 4 && trimed.toLowerCase() === "true") {
+    else if ((trimed.length === 5 && trimed.toLowerCase() === "false") ||
+        (trimed.length === 4 && trimed.toLowerCase() === "true")) {
         return booleanType(item);
     }
-    else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}" || trimed[0] === "[" && trimed[trimed.length - 1] === "]") {
+    else if ((trimed[0] === "{" && trimed[trimed.length - 1] === "}") ||
+        (trimed[0] === "[" && trimed[trimed.length - 1] === "]")) {
         return jsonType(item);
     }
     else {

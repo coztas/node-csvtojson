@@ -85,7 +85,7 @@ export interface CSVParseParam {
      */
     needEmitAll: boolean;
 }
-export declare type CellParser = (item: string, head: string, resultRow: any, row: string[], columnIndex: number) => any;
+export declare type CellParser = (item: string, head: string, resultRow: any, row: string[], columnIndex: number, rowIndex: number) => any;
 export interface ColumnParam {
     flat?: boolean;
     cellParser?: string | CellParser;

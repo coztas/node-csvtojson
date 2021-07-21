@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function mergeParams(params) {
     var defaultParam = {
-        delimiter: ',',
+        delimiter: ",",
         ignoreColumns: undefined,
         includeColumns: undefined,
         quote: '"',
@@ -22,7 +22,7 @@ function mergeParams(params) {
         output: "json",
         nullObject: false,
         downstreamFormat: "line",
-        needEmitAll: true
+        needEmitAll: true,
     };
     if (!params) {
         params = {};
