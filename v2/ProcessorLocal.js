@@ -38,9 +38,9 @@ var ProcessorLocal = /** @class */ (function (_super) {
         if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
             var buf = this.runtime.csvLineBuffer;
             this.runtime.csvLineBuffer = undefined;
-            return this.process(buf, true)
-                .then(function (res) {
-                if (_this.runtime.csvLineBuffer && _this.runtime.csvLineBuffer.length > 0) {
+            return this.process(buf, true).then(function (res) {
+                if (_this.runtime.csvLineBuffer &&
+                    _this.runtime.csvLineBuffer.length > 0) {
                     return bluebird_1.default.reject(CSVError_1.default.unclosed_quote(_this.runtime.parsedLineNumber, _this.runtime.csvLineBuffer.toString()));
                 }
                 else {
@@ -135,8 +135,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
                 prom = bluebird_1.default.resolve(stringToLineResult.lines);
             }
             return prom.then(function (lines) {
-                if (!runtime.started
-                    && !_this.runtime.headers) {
+                if (!runtime.started && !_this.runtime.headers) {
                     return _this.processDataWithHead(lines);
                 }
                 else {
@@ -183,7 +182,8 @@ var ProcessorLocal = /** @class */ (function (_super) {
                 this.runtime.headers = headerRow;
             }
         }
-        if (this.runtime.needProcessIgnoreColumn || this.runtime.needProcessIncludeColumn) {
+        if (this.runtime.needProcessIgnoreColumn ||
+            this.runtime.needProcessIncludeColumn) {
             this.filterHeader();
         }
         if (this.needEmitHead && !this.headEmitted) {
@@ -199,7 +199,8 @@ var ProcessorLocal = /** @class */ (function (_super) {
             for (var i = 0; i < headers.length; i++) {
                 if (this.params.ignoreColumns) {
                     if (this.params.ignoreColumns.test(headers[i])) {
-                        if (this.params.includeColumns && this.params.includeColumns.test(headers[i])) {
+                        if (this.params.includeColumns &&
+                            this.params.includeColumns.test(headers[i])) {
                             this.runtime.selectedColumns.push(i);
                         }
                         else {
@@ -255,7 +256,10 @@ var ProcessorLocal = /** @class */ (function (_super) {
     ProcessorLocal.prototype.prependLeftBuf = function (buf) {
         if (buf) {
             if (this.runtime.csvLineBuffer) {
-                this.runtime.csvLineBuffer = Buffer.concat([buf, this.runtime.csvLineBuffer]);
+                this.runtime.csvLineBuffer = Buffer.concat([
+                    buf,
+                    this.runtime.csvLineBuffer,
+                ]);
             }
             else {
                 this.runtime.csvLineBuffer = buf;
@@ -279,23 +283,31 @@ var ProcessorLocal = /** @class */ (function (_super) {
 }(Processor_1.Processor));
 exports.ProcessorLocal = ProcessorLocal;
 function processLineHook(lines, runtime, offset, cb) {
+    console.log("offset", offset);
     if (offset >= lines.length) {
         cb();
     }
     else {
         if (runtime.preFileLineHook) {
             var line = lines[offset];
-            var res = runtime.preFileLineHook(line, runtime.parsedLineNumber + offset);
+            console.log("line", line);
+            console.log("runtime.parsedLineNumber", runtime.parsedLineNumber);
+            var res_1 = runtime.preFileLineHook(line, runtime.parsedLineNumber + offset);
             offset++;
-            if (res && res.then) {
-                res.then(function (value) {
+            if (res_1 && res_1.then) {
+                res_1.then(function (value) {
+                    console.log("res1", res_1);
+                    console.log("res1 offset", offset);
                     lines[offset - 1] = value;
                     processLineHook(lines, runtime, offset, cb);
                 });
             }
             else {
-                lines[offset - 1] = res;
+                console.log("res2", res_1);
+                lines[offset - 1] = res_1;
                 while (offset < lines.length) {
+                    console.log("res2 offset", offset);
+                    console.log("res2 runtime.parsedLineNumber", runtime.parsedLineNumber);
                     lines[offset] = runtime.preFileLineHook(lines[offset], runtime.parsedLineNumber + offset);
                     offset++;
                 }
