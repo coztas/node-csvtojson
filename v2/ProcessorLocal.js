@@ -283,32 +283,30 @@ var ProcessorLocal = /** @class */ (function (_super) {
 }(Processor_1.Processor));
 exports.ProcessorLocal = ProcessorLocal;
 function processLineHook(lines, runtime, offset, cb) {
-    console.log("offset", offset);
     if (offset >= lines.length) {
         cb();
     }
     else {
         if (runtime.preFileLineHook) {
+            var offsetParam = runtime.parsedLineNumber > 0 && offset === 0
+                ? runtime.parsedLineNumber + offset + 1
+                : runtime.parsedLineNumber + offset;
             var line = lines[offset];
-            console.log("line", line);
-            console.log("runtime.parsedLineNumber", runtime.parsedLineNumber);
-            var res_1 = runtime.preFileLineHook(line, runtime.parsedLineNumber + offset);
+            var res = runtime.preFileLineHook(line, offsetParam);
             offset++;
-            if (res_1 && res_1.then) {
-                res_1.then(function (value) {
-                    console.log("res1", res_1);
-                    console.log("res1 offset", offset);
+            if (res && res.then) {
+                res.then(function (value) {
                     lines[offset - 1] = value;
                     processLineHook(lines, runtime, offset, cb);
                 });
             }
             else {
-                console.log("res2", res_1);
-                lines[offset - 1] = res_1;
+                lines[offset - 1] = res;
                 while (offset < lines.length) {
-                    console.log("res2 offset", offset);
-                    console.log("res2 runtime.parsedLineNumber", runtime.parsedLineNumber);
-                    lines[offset] = runtime.preFileLineHook(lines[offset], runtime.parsedLineNumber + offset);
+                    var offsetParam_1 = runtime.parsedLineNumber > 0 && offset === 0
+                        ? runtime.parsedLineNumber + offset + 1
+                        : runtime.parsedLineNumber + offset;
+                    lines[offset] = runtime.preFileLineHook(lines[offset], offsetParam_1);
                     offset++;
                 }
                 cb();

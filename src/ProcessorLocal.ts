@@ -253,39 +253,33 @@ function processLineHook(
   offset: number,
   cb: (err?) => void
 ) {
-  console.log("offset", offset);
   if (offset >= lines.length) {
     cb();
   } else {
     if (runtime.preFileLineHook) {
-      const line = lines[offset];
-      console.log("line", line);
-      console.log("runtime.parsedLineNumber", runtime.parsedLineNumber);
+      const offsetParam =
+        runtime.parsedLineNumber > 0 && offset === 0
+          ? runtime.parsedLineNumber + offset + 1
+          : runtime.parsedLineNumber + offset;
 
-      const res = runtime.preFileLineHook(
-        line,
-        runtime.parsedLineNumber + offset
-      );
+      const line = lines[offset];
+      const res = runtime.preFileLineHook(line, offsetParam);
       offset++;
       if (res && (res as PromiseLike<string>).then) {
         (res as PromiseLike<string>).then((value) => {
-          console.log("res1", res);
-          console.log("res1 offset", offset);
           lines[offset - 1] = value;
           processLineHook(lines, runtime, offset, cb);
         });
       } else {
-        console.log("res2", res);
         lines[offset - 1] = res as string;
         while (offset < lines.length) {
-          console.log("res2 offset", offset);
-          console.log(
-            "res2 runtime.parsedLineNumber",
-            runtime.parsedLineNumber
-          );
+          const offsetParam =
+            runtime.parsedLineNumber > 0 && offset === 0
+              ? runtime.parsedLineNumber + offset + 1
+              : runtime.parsedLineNumber + offset;
           lines[offset] = runtime.preFileLineHook(
             lines[offset],
-            runtime.parsedLineNumber + offset
+            offsetParam
           ) as string;
           offset++;
         }
