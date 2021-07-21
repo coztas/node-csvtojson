@@ -3,27 +3,32 @@ import P from "bluebird";
 import { prepareData } from "./dataClean";
 import getEol from "./getEol";
 import { stringToLines } from "./fileline";
-import { bufFromString, filterArray,trimLeft } from "./util";
+import { bufFromString, filterArray, trimLeft } from "./util";
 import { RowSplit } from "./rowSplit";
 import lineToJson from "./lineToJson";
 import { ParseRuntime } from "./ParseRuntime";
 import CSVError from "./CSVError";
-
-
 
 export class ProcessorLocal extends Processor {
   flush(): P<ProcessLineResult[]> {
     if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
       const buf = this.runtime.csvLineBuffer;
       this.runtime.csvLineBuffer = undefined;
-      return this.process(buf, true)
-        .then((res) => {
-          if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
-            return P.reject(CSVError.unclosed_quote(this.runtime.parsedLineNumber, this.runtime.csvLineBuffer.toString()))
-          } else {
-            return P.resolve(res);
-          }
-        })
+      return this.process(buf, true).then((res) => {
+        if (
+          this.runtime.csvLineBuffer &&
+          this.runtime.csvLineBuffer.length > 0
+        ) {
+          return P.reject(
+            CSVError.unclosed_quote(
+              this.runtime.parsedLineNumber,
+              this.runtime.csvLineBuffer.toString()
+            )
+          );
+        } else {
+          return P.resolve(res);
+        }
+      });
     } else {
       return P.resolve([]);
     }
@@ -47,7 +52,6 @@ export class ProcessorLocal extends Processor {
       this._needEmitHead = this.converter.listeners("header").length > 0;
     }
     return this._needEmitHead;
-
   }
   process(chunk: Buffer, finalChunk = false): P<ProcessLineResult[]> {
     let csvString: string;
@@ -55,7 +59,6 @@ export class ProcessorLocal extends Processor {
       csvString = chunk.toString();
     } else {
       csvString = prepareData(chunk, this.converter.parseRuntime);
-
     }
     return P.resolve()
       .then(() => {
@@ -71,7 +74,7 @@ export class ProcessorLocal extends Processor {
         } else {
           return P.resolve([]);
         }
-      })
+      });
   }
   private processCSV(csv: string, finalChunk: boolean): P<ProcessLineResult[]> {
     const params = this.params;
@@ -102,21 +105,15 @@ export class ProcessorLocal extends Processor {
         prom = P.resolve(stringToLineResult.lines);
       }
       return prom.then((lines) => {
-        if (!runtime.started
-          && !this.runtime.headers
-        ) {
+        if (!runtime.started && !this.runtime.headers) {
           return this.processDataWithHead(lines);
         } else {
           return this.processCSVBody(lines);
         }
-
-      })
-
+      });
     } else {
-
       return P.resolve([]);
     }
-
   }
   private processDataWithHead(lines: string[]): ProcessLineResult[] {
     if (this.params.noheader) {
@@ -150,7 +147,10 @@ export class ProcessorLocal extends Processor {
         this.runtime.headers = headerRow;
       }
     }
-    if (this.runtime.needProcessIgnoreColumn || this.runtime.needProcessIncludeColumn) {
+    if (
+      this.runtime.needProcessIgnoreColumn ||
+      this.runtime.needProcessIncludeColumn
+    ) {
       this.filterHeader();
     }
     if (this.needEmitHead && !this.headEmitted) {
@@ -166,7 +166,10 @@ export class ProcessorLocal extends Processor {
       for (let i = 0; i < headers.length; i++) {
         if (this.params.ignoreColumns) {
           if (this.params.ignoreColumns.test(headers[i])) {
-            if (this.params.includeColumns && this.params.includeColumns.test(headers[i])) {
+            if (
+              this.params.includeColumns &&
+              this.params.includeColumns.test(headers[i])
+            ) {
               this.runtime.selectedColumns.push(i);
             } else {
               continue;
@@ -194,9 +197,11 @@ export class ProcessorLocal extends Processor {
         //   }
         // }
       }
-      this.runtime.headers = filterArray(this.runtime.headers, this.runtime.selectedColumns);
+      this.runtime.headers = filterArray(
+        this.runtime.headers,
+        this.runtime.selectedColumns
+      );
     }
-
   }
   private processCSVBody(lines: string[]): ProcessLineResult[] {
     if (this.params.output === "line") {
@@ -220,12 +225,14 @@ export class ProcessorLocal extends Processor {
   private prependLeftBuf(buf: Buffer) {
     if (buf) {
       if (this.runtime.csvLineBuffer) {
-        this.runtime.csvLineBuffer = Buffer.concat([buf, this.runtime.csvLineBuffer]);
+        this.runtime.csvLineBuffer = Buffer.concat([
+          buf,
+          this.runtime.csvLineBuffer,
+        ]);
       } else {
         this.runtime.csvLineBuffer = buf;
       }
     }
-
   }
   private runPreLineHook(lines: string[]): P<string[]> {
     return new P((resolve, reject) => {
@@ -235,30 +242,51 @@ export class ProcessorLocal extends Processor {
         } else {
           resolve(lines);
         }
-      })
+      });
     });
   }
 }
 
-function processLineHook(lines: string[], runtime: ParseRuntime, offset: number,
+function processLineHook(
+  lines: string[],
+  runtime: ParseRuntime,
+  offset: number,
   cb: (err?) => void
 ) {
+  console.log("offset", offset);
   if (offset >= lines.length) {
     cb();
   } else {
     if (runtime.preFileLineHook) {
       const line = lines[offset];
-      const res = runtime.preFileLineHook(line, runtime.parsedLineNumber + offset);
+      console.log("line", line);
+      console.log("runtime.parsedLineNumber", runtime.parsedLineNumber);
+
+      const res = runtime.preFileLineHook(
+        line,
+        runtime.parsedLineNumber + offset
+      );
       offset++;
       if (res && (res as PromiseLike<string>).then) {
         (res as PromiseLike<string>).then((value) => {
+          console.log("res1", res);
+          console.log("res1 offset", offset);
           lines[offset - 1] = value;
           processLineHook(lines, runtime, offset, cb);
         });
       } else {
+        console.log("res2", res);
         lines[offset - 1] = res as string;
         while (offset < lines.length) {
-          lines[offset] = runtime.preFileLineHook(lines[offset], runtime.parsedLineNumber + offset) as string;
+          console.log("res2 offset", offset);
+          console.log(
+            "res2 runtime.parsedLineNumber",
+            runtime.parsedLineNumber
+          );
+          lines[offset] = runtime.preFileLineHook(
+            lines[offset],
+            runtime.parsedLineNumber + offset
+          ) as string;
           offset++;
         }
         cb();
