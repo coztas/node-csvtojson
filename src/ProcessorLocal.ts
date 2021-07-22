@@ -258,7 +258,7 @@ function processLineHook(
   } else {
     if (runtime.preFileLineHook) {
       const offsetParam =
-        runtime.parsedLineNumber > 0 && offset === 0
+        runtime.parsedLineNumber > 0
           ? runtime.parsedLineNumber + offset + 1
           : runtime.parsedLineNumber + offset;
 
@@ -274,7 +274,7 @@ function processLineHook(
         lines[offset - 1] = res as string;
         while (offset < lines.length) {
           const offsetParam =
-            runtime.parsedLineNumber > 0 && offset === 0
+            runtime.parsedLineNumber > 0
               ? runtime.parsedLineNumber + offset + 1
               : runtime.parsedLineNumber + offset;
           lines[offset] = runtime.preFileLineHook(

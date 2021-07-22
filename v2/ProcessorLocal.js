@@ -288,7 +288,7 @@ function processLineHook(lines, runtime, offset, cb) {
     }
     else {
         if (runtime.preFileLineHook) {
-            var offsetParam = runtime.parsedLineNumber > 0 && offset === 0
+            var offsetParam = runtime.parsedLineNumber > 0
                 ? runtime.parsedLineNumber + offset + 1
                 : runtime.parsedLineNumber + offset;
             var line = lines[offset];
@@ -303,7 +303,7 @@ function processLineHook(lines, runtime, offset, cb) {
             else {
                 lines[offset - 1] = res;
                 while (offset < lines.length) {
-                    var offsetParam_1 = runtime.parsedLineNumber > 0 && offset === 0
+                    var offsetParam_1 = runtime.parsedLineNumber > 0
                         ? runtime.parsedLineNumber + offset + 1
                         : runtime.parsedLineNumber + offset;
                     lines[offset] = runtime.preFileLineHook(lines[offset], offsetParam_1);
